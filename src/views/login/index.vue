@@ -67,24 +67,18 @@ export default {
   methods: {
     // 登陆功能
     async onSubmit () {
-      this.$store.dispatch('jiaHandle', { count: 5, delay: 2000 })
-      this.$store.dispatch('jiaHandle', { count: 2, delay: 1000 })
-      this.$store.dispatch('jiaHandle', { count: 1, delay: 500 })
-
       try {
-        // 1.设置校验
         await this.$refs.form.validate()
-
-        // 2.发送请求
         this.isLoginLoading = true
         const { data } = await login(this.form)
         this.isLoginLoading = false
-        // 3. 响应处理
         if (data.state === 1) {
           this.$router.push({
             name: 'home'
           })
           this.$message.success('登陆成功')
+          // 将用户信息存储到 Vuex 中
+          this.$store.commit('setUser', data.content)
         } else {
           this.$message.error('登陆失败')
         }
