@@ -73,12 +73,11 @@ export default {
         const { data } = await login(this.form)
         this.isLoginLoading = false
         if (data.state === 1) {
-          this.$router.push({
-            name: 'home'
-          })
           this.$message.success('登陆成功')
           // 将用户信息存储到 Vuex 中
           this.$store.commit('setUser', data.content)
+          // 根据可能存储的 redirect 数据进行跳转设置
+          this.$router.push(this.$route.query.redirect || '/')
         } else {
           this.$message.error('登陆失败')
         }
