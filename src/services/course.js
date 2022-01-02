@@ -8,3 +8,12 @@ export const getQueryCourses = data => {
     data
   })
 }
+
+// 课程上下架接口
+export const changeState = params => {
+  return request({
+    method: 'GET',
+    url: '/boss/course/changeState',
+    params
+  })
+}

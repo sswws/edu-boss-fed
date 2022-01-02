@@ -76,6 +76,12 @@ const routes = [
         name: 'alloc-menu',
         component: () => import(/* webpackChunkName: 'alloc-menu' */'@/views/role/alloc-menu'),
         props: true
+      },
+      // 添加课程组件
+      {
+        path: '/course/create',
+        name: 'course-create',
+        component: () => import(/* webpackChunkName: 'course-create' */'@/views/course/create')
       }
     ]
   },
