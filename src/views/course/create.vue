@@ -58,68 +58,67 @@
             ></el-input-number>
           </el-form-item>
         </div>
+        <!-- 课程封面 -->
         <div v-show="activeStep === 1">
-          <!-- 课程封面 -->
-          <el-form-item label="课程封面">
-            <el-upload
-              class="avatar-uploader"
-              action="https://jsonplaceholder.typicode.com/posts/"
-              :show-file-list="false"
-              :on-success="handleAvatarSuccess"
-              :before-upload="beforeAvatarUpload"
-              :http-request="handleUpload"
-            >
-              <!-- img 为预览图片的显示位置 -->
-              <img v-if="course.courseListImg" :src="course.courseListImg" class="avatar" />
-              <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-            </el-upload>
-          </el-form-item>
-          <el-form-item label="解锁封面">
-            <el-upload
-              class="avatar-uploader"
-              action="https://jsonplaceholder.typicode.com/posts/"
-              :show-file-list="false"
-              :on-success="handleAvatarSuccess"
-              :before-upload="beforeAvatarUpload">
-              <img v-if="imageUrl" :src="imageUrl" class="avatar" />
-              <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-            </el-upload>
-          </el-form-item>
+          <!-- 封装为图片上传组件 -->
+          <course-image
+            v-model="course.courseListImg"
+            label="课程封面"
+            :limit="3"
+          ></course-image>
+          <course-image
+            v-model="course.courseImgUrl"
+            label="解锁封面"
+          ></course-image>
         </div>
         <!-- 销售信息 -->
         <div v-show="activeStep === 2">
           <el-form-item label="售卖价格">
-            <el-input>
+            <el-input
+              v-model="course.discounts"
+              type="number"
+              :min="0"
+            >
               <template slot="append">元</template>
             </el-input>
           </el-form-item>
           <el-form-item label="商品原价">
-            <el-input>
+            <el-input
+              v-model="course.price"
+              type="number"
+              :min="0"
+            >
               <template slot="append">元</template>
             </el-input>
           </el-form-item>
           <el-form-item label="销量">
-            <el-input>
+            <el-input
+              v-model="course.sales"
+              type="number"
+              :min="0"
+            >
               <template slot="append">单</template>
             </el-input>
           </el-form-item>
           <el-form-item label="活动标签">
-            <el-input></el-input>
+            <el-input
+              v-model="course.discountsTag"
+            ></el-input>
           </el-form-item>
         </div>
         <!-- 秒杀信息 -->
         <div v-show="activeStep === 3">
           <el-form-item label="限时秒杀开关" label-width="120px">
             <el-switch
-              v-model="isSeckill"
+              v-model="course.activityCourse"
               active-color="#13ce66"
               inactive-color="#ff4949"
             ></el-switch>
           </el-form-item>
-          <template v-if="isSeckill">
+          <template v-if="course.activityCourse">
             <el-form-item label="开始时间">
               <el-date-picker
-                v-model="value1"
+                v-model="course.activityCourseDTO.beginTime"
                 type="datetime"
                 placeholder="选择日期时间"
               >
@@ -127,19 +126,27 @@
             </el-form-item>
             <el-form-item label="结束时间">
               <el-date-picker
-                v-model="value1"
+                v-model="course.activityCourseDTO.endTime"
                 type="datetime"
                 placeholder="选择日期时间"
               >
               </el-date-picker>
             </el-form-item>
             <el-form-item label="秒杀价">
-              <el-input>
+              <el-input
+                v-model="course.activityCourseDTO.amount"
+                type="number"
+                :min="0"
+              >
                 <template slot="append">元</template>
               </el-input>
             </el-form-item>
             <el-form-item label="库存">
-              <el-input>
+              <el-input
+                v-model="course.activityCourseDTO.stock"
+                type="number"
+                :min="0"
+              >
                 <template slot="append">个</template>
               </el-input>
             </el-form-item>
@@ -147,11 +154,23 @@
         </div>
         <!-- 课程详情 -->
         <div v-show="activeStep === 4">
-          <el-form-item>
-            <el-input type="textarea"></el-input>
+          <el-form-item label="课程详情">
+            <text-editor v-model="course.courseDescriptionMarkDown"></text-editor>
+          </el-form-item>
+          <el-form-item label="是否上架">
+            <el-switch
+              v-model="course.status"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              :active-value="1"
+              :inactive-value="0"
+            ></el-switch>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary">保存</el-button>
+            <el-button
+              type="primary"
+              @click="handleSave"
+            >保存</el-button>
           </el-form-item>
         </div>
         <!-- 下一步按钮 -->
@@ -164,10 +183,16 @@
 </template>
 
 <script>
-// import { saveOrUpdateCourse } from '@/services/course'
-import { uploadCourseImage } from '@/services/course'
+import CourseImage from './components/CourseImage'
+import { saveOrUpdateCourse } from '@/services/course'
+import TextEditor from '@/components/TextEditor'
+
 export default ({
   name: 'CourseCreate',
+  components: {
+    CourseImage,
+    TextEditor
+  },
   data () {
     return {
       // 步骤的进度
@@ -182,26 +207,32 @@ export default ({
       ],
       // 本地预览图片地址
       imageUrl: '',
-      // 秒杀状态
-      isSeckill: false,
       // 添加课程的相关信息
+      // - 将数据中与 ID 相关的数据去除，因为是编辑功能使用的
       course: {
-        id: 0,
+        // id: 0,
+        // 课程名称
         courseName: '',
+        // 课程介绍
         brief: '',
         teacherDTO: {
-          id: 0,
-          courseId: 0,
+          // id: 0,
+          // courseId: 0,
+          // 讲师名称
           teacherName: '',
           teacherHeadPicUrl: '',
           position: '',
           // 讲师介绍
           description: ''
         },
+        // 课程详情内容
         courseDescriptionMarkDown: '',
+        // 商品原价
         price: 0,
+        // 售卖价格
         discounts: 0,
         priceTag: '',
+        // 活动标签
         discountsTag: '',
         isNew: true,
         isNewDes: '',
@@ -215,15 +246,22 @@ export default ({
         previewFirstField: '',
         // 概述2
         previewSecondField: '',
+        // 上架状态,默认值 0 代表不上架,1 代表上架
         status: 0,
+        // 销量
         sales: 0,
-        activityCourse: true,
+        // 参与秒杀活动的课程
+        activityCourse: false,
         activityCourseDTO: {
-          id: 0,
-          courseId: 0,
+          // id: 0,
+          // courseId: 0,
+          // 秒杀活动开始时间
           beginTime: '',
+          // 结束时间
           endTime: '',
+          // 秒杀活动价格
           amount: 0,
+          // 秒杀库存
           stock: 0
         },
         autoOnlineTime: ''
@@ -231,35 +269,14 @@ export default ({
     }
   },
   methods: {
-    // 图片上传处理函数
-    // - option 为上传的相关信息
-    // - option.file 为上传的文件信息
-    async handleUpload (option) {
-      // 使用 FormData 对象处理
-      const fd = new FormData()
-      fd.append('file', option.file)
-      // 发送上传请求
-      const { data } = await uploadCourseImage(fd)
+    async handleSave () {
+      const { data } = await saveOrUpdateCourse(this.course)
       if (data.code === '000000') {
-        // data.data.name 服务端响应的，图片上传成功后的线上地址
-        this.course.courseListImg = data.data.name
+        this.$message.success('添加课程成功')
+        this.$router.push({
+          name: 'course'
+        })
       }
-    },
-    // 上传图片成功回调
-    handleAvatarSuccess (res, file) {
-      this.imageUrl = URL.createObjectURL(file.raw)
-    },
-    // 上传前的回调
-    beforeAvatarUpload (file) {
-      const isJPG = file.type === 'image/jpeg'
-      const isLt2M = file.size / 1024 / 1024 < 2
-      if (!isJPG) {
-        this.$message.error('上传头像图片只能是 JPG 格式!')
-      }
-      if (!isLt2M) {
-        this.$message.error('上传头像图片大小不能超过 2MB!')
-      }
-      return isJPG && isLt2M
     }
   }
 })
@@ -268,28 +285,5 @@ export default ({
 <style lang="scss" scoped>
 .el-step {
   cursor: pointer;
-}
-::v-deep .avatar-uploader .el-upload {
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-::v-deep .avatar-uploader .el-upload:hover {
-  border-color: #409eff;
-}
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-  width: 178px;
-  height: 178px;
-  line-height: 178px;
-  text-align: center;
-}
-.avatar {
-  width: 178px;
-  height: 178px;
-  display: block;
 }
 </style>
