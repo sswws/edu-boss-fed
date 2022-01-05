@@ -16,6 +16,13 @@ export default ({
   mounted () {
     this.initEditor()
   },
+  data () {
+    return {
+      editor: null,
+      // 用于标记编辑的数据是否加载完毕
+      isLoaded: false
+    }
+  },
   methods: {
     initEditor () {
       const editor = new E(this.$refs.editor)
@@ -35,6 +42,16 @@ export default ({
       }
       editor.create()
       editor.txt.html(this.value)
+      this.editor = editor
+    }
+  },
+  watch: {
+    value () {
+      if (this.isLoaded === false) {
+        // 得到了加载的新数据，设置给富文本编辑器
+        this.editor.txt.html(this.value)
+        this.isLoaded = true
+      }
     }
   }
 })

@@ -82,6 +82,27 @@ const routes = [
         path: '/course/create',
         name: 'course-create',
         component: () => import(/* webpackChunkName: 'course-create' */'@/views/course/create')
+      },
+      // 编辑课程组件
+      {
+        path: '/course/:courseId/edit',
+        name: 'course-edit',
+        component: () => import(/* webpackChunkName: 'course-edit' */'@/views/course/edit'),
+        props: true
+      },
+      // 课程内容组件
+      {
+        path: '/course/:courseId/section',
+        name: 'course-section',
+        component: () => import(/* webpackChunkName: 'course-section' */'@/views/course/section'),
+        props: true
+      },
+      // 上传课时视频
+      {
+        path: '/course/:courseId/video',
+        name: 'course-video',
+        component: () => import(/* webpackChunkName: 'course-video' */'@/views/course/video'),
+        props: true
       }
     ]
   },
